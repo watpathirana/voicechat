@@ -38,6 +38,17 @@
             font-weight: bold;
             margin-top: 10px;
         }
+
+        #tap-to-play {
+            display: none;
+            /* Hidden by default */
+            background-color: red;
+            padding: 10px;
+            font-size: 16px;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -45,14 +56,17 @@
 
     <h1>Voice to Audio Response</h1>
 
-    <button onclick="startListening()">🎤 Ask with Voice 1</button>
-
+    <button onclick="startListening()">🎤 Ask with Voice</button>
     <p class="status" id="status">Click the mic and ask your question.</p>
     <p id="recognized-text"></p>
+
+    <button id="tap-to-play" onclick="playManually()">🔊 Tap to Play</button>
 
     <audio id="audio-player"></audio> <!-- Hidden audio player -->
 
     <script>
+        let latestAudioUrl = "";
+
         function startListening() {
             if (!('webkitSpeechRecognition' in window)) {
                 alert("Your browser does not support speech recognition.");
@@ -119,19 +133,24 @@
                             byteNumbers[i] = byteCharacters.charCodeAt(i);
                         }
                         const audioBlob = new Blob([byteNumbers], { type: 'audio/wav' });
-                        const audioUrl = URL.createObjectURL(audioBlob);
+                        latestAudioUrl = URL.createObjectURL(audioBlob);
 
                         // Use a hidden <audio> element for autoplay on mobile
                         const audio = document.getElementById("audio-player");
-                        audio.src = audioUrl;
-                        audio.play().catch(error => {
-                            console.log("Autoplay blocked! Waiting for user interaction...");
-                            document.getElementById("status").innerText = "Tap to play response!";
-                            audio.onclick = () => audio.play();
+                        audio.src = latestAudioUrl;
+
+                        // Try to play the audio
+                        audio.play().then(() => {
+                            console.log("Audio is playing automatically!");
+                        }).catch(error => {
+                            console.log("Autoplay blocked! Showing tap-to-play button.");
+                            document.getElementById("tap-to-play").style.display = "block";
+                            document.getElementById("status").innerText = "Tap the button to play.";
                         });
 
                         audio.onended = () => {
                             document.getElementById("status").innerText = "Audio finished playing.";
+                            document.getElementById("tap-to-play").style.display = "none"; // Hide button after play
                         };
                     } else {
                         document.getElementById("status").innerText = "No valid audio found.";
@@ -143,6 +162,16 @@
             } catch (error) {
                 document.getElementById("status").innerText = "Error fetching response.";
                 console.error("Error fetching audio:", error);
+            }
+        }
+
+        function playManually() {
+            if (latestAudioUrl) {
+                const audio = document.getElementById("audio-player");
+                audio.src = latestAudioUrl;
+                audio.play();
+                document.getElementById("tap-to-play").style.display = "none"; // Hide after playing
+                document.getElementById("status").innerText = "Playing response...";
             }
         }
     </script>
