@@ -45,10 +45,12 @@
 
     <h1>Voice to Audio Response</h1>
 
-    <button onclick="startListening()">🎤 Ask with Voice</button>
+    <button onclick="startListening()">🎤 Ask with Voice 1</button>
 
     <p class="status" id="status">Click the mic and ask your question.</p>
     <p id="recognized-text"></p>
+
+    <audio id="audio-player"></audio> <!-- Hidden audio player -->
 
     <script>
         function startListening() {
@@ -119,8 +121,14 @@
                         const audioBlob = new Blob([byteNumbers], { type: 'audio/wav' });
                         const audioUrl = URL.createObjectURL(audioBlob);
 
-                        const audio = new Audio(audioUrl);
-                        audio.play();
+                        // Use a hidden <audio> element for autoplay on mobile
+                        const audio = document.getElementById("audio-player");
+                        audio.src = audioUrl;
+                        audio.play().catch(error => {
+                            console.log("Autoplay blocked! Waiting for user interaction...");
+                            document.getElementById("status").innerText = "Tap to play response!";
+                            audio.onclick = () => audio.play();
+                        });
 
                         audio.onended = () => {
                             document.getElementById("status").innerText = "Audio finished playing.";
