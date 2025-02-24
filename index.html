@@ -46,14 +46,11 @@
     <h1>Voice to Audio Response</h1>
 
     <button onclick="startListening()">🎤 Ask with Voice</button>
-    <button onclick="fetchAndPlayAudio()">🔊 Get Response & Play Audio</button>
 
-    <p class="status" id="status">Click the mic to speak your question.</p>
+    <p class="status" id="status">Click the mic and ask your question.</p>
     <p id="recognized-text"></p>
 
     <script>
-        let recognizedText = ""; // Variable to store recognized speech
-
         function startListening() {
             if (!('webkitSpeechRecognition' in window)) {
                 alert("Your browser does not support speech recognition.");
@@ -69,9 +66,12 @@
             recognition.start();
 
             recognition.onresult = (event) => {
-                recognizedText = event.results[0][0].transcript;
+                const recognizedText = event.results[0][0].transcript;
                 document.getElementById("recognized-text").innerText = "You said: " + recognizedText;
-                document.getElementById("status").innerText = "Recognized! Click 'Get Response' to proceed.";
+                document.getElementById("status").innerText = "Fetching response...";
+
+                // Auto-fetch and play response
+                fetchAndPlayAudio(recognizedText);
             };
 
             recognition.onerror = (event) => {
@@ -80,26 +80,17 @@
             };
 
             recognition.onend = () => {
-                if (!recognizedText) {
-                    document.getElementById("status").innerText = "No speech detected. Try again.";
-                }
+                document.getElementById("status").innerText = "Listening stopped.";
             };
         }
 
-        async function fetchAndPlayAudio() {
-            if (!recognizedText) {
-                document.getElementById("status").innerText = "No question detected. Please speak first.";
-                return;
-            }
-
+        async function fetchAndPlayAudio(questionText) {
             const apiUrl = "https://lifeybackend.azurewebsites.net/chat";
             const requestData = {
-                message: recognizedText, // Send the recognized voice input
+                message: questionText,
                 language: "English",
                 sessionId: "72922234-d4c5-43fa-a20a-2442a6ec393a"
             };
-
-            document.getElementById("status").innerText = "Fetching response...";
 
             try {
                 const response = await fetch(apiUrl, {
